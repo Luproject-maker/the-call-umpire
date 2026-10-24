@@ -2,7 +2,7 @@ import * as THREE from './vendor/three.module.min.js';
 import {ZONE,PLATE,BALL_RADIUS,trajectory,sampleABS} from './engine.js';
 import {Athlete,POSES} from './players.js';
 import {ABSReplay} from './abs-replay.js';
-import {IllustratedPlayers} from './illustrated-players.js';
+import {IllustratedPlayers} from './illustrated-players.js?v=4';
 const C={grass:0x355b3d,dirt:0x93684d,jersey:0xe1dfd0,navy:0x163b3c,skin:0xb6805c};
 export class Ballpark{
   constructor(canvas){
@@ -63,7 +63,7 @@ export class Ballpark{
     this.batter=new Athlete(this.scene,{role:'batter',position:[-.93,.025,.35],rotation:-Math.PI/2,jersey:0xdad8d1,accent:0x183950,number:'27',skin:0xc39372});
     this.catcher=new Athlete(this.scene,{role:'catcher',position:[0,.015,-.83],rotation:Math.PI,jersey:0xd9ddd9,accent:0x193949,number:'2',skin:0xa97857});
     this.glove=this.catcher.glove;
-    this.illustrated=new IllustratedPlayers(this.scene);this.assetsReady=this.illustrated.ready.then(()=>{this.pitcher.root.visible=false;this.batter.root.visible=false;this.catcher.root.visible=false;});
+    this.illustrated=new IllustratedPlayers(this.scene,this.camera);this.assetsReady=this.illustrated.ready.then(()=>{this.pitcher.root.visible=false;this.batter.root.visible=false;this.catcher.root.visible=false;});
   }
   buildZone(){
     this.zone=new THREE.Group();this.scene.add(this.zone);this.zone.visible=false;
@@ -78,17 +78,17 @@ export class Ballpark{
     this.ball=new THREE.Group();this.scene.add(this.ball);this.ball.visible=false;this.mesh(new THREE.SphereGeometry(BALL_RADIUS,20,16),0xf2ead8,this.ball,[0,0,0],{roughness:.6,emissive:0x96846a,emissiveIntensity:.15});
     for(const side of [-1,1]){const pts=[];for(let i=0;i<=40;i++){const angle=i/40*Math.PI*2;pts.push([Math.cos(angle)*.028,Math.sin(angle)*.028,side*.023]);}this.line(pts,0xac5149,this.ball);}
   }
-  resize(){const r=this.canvas.parentElement.getBoundingClientRect();this.renderer.setSize(r.width,r.height,false);this.camera.aspect=r.width/r.height;this.camera.updateProjectionMatrix();}
+  resize(){const r=this.canvas.parentElement.getBoundingClientRect();this.renderer.setSize(r.width,r.height,false);this.camera.aspect=r.width/r.height;this.camera.fov=2*Math.atan(Math.max(Math.tan(32*Math.PI/180),Math.tan(38*Math.PI/180)/this.camera.aspect))*180/Math.PI;this.camera.updateProjectionMatrix();}
   setZone(visible){this.zone.visible=visible;}
   clearTrail(){for(const o of [...this.trail.children]){this.trail.remove(o);o.geometry.dispose();o.material.dispose();}this.marker.visible=false;}
   prepare(){this.inReplay=false;this.clearTrail();this.ball.visible=false;this.pitcher.setPose(POSES.set);this.catcher.setPose(POSES.catcher);this.illustrated.prepare();}
   windup(t){this.pitcher.windup(t);this.illustrated.windup(t);}
-  moveBall(p,t){const q=trajectory(p,t);this.ball.visible=true;this.ball.position.set(q.x,q.y,q.z);this.ball.rotation.set(t*20,t*30,0);const target=trajectory(p,1.034);this.catcher.receive(target.x,target.y,t);this.pitcher.followThrough(t);this.illustrated.moveBall(t,target.x);}
-  catchBall(){this.ball.visible=false;}
+  moveBall(p,t){const q=trajectory(p,t);this.ball.visible=true;this.ball.position.set(q.x,q.y,q.z);this.ball.rotation.set(t*20,t*30,0);const target=trajectory(p,1.034);this.catcher.receive(target.x,target.y,t);this.pitcher.followThrough(t);this.illustrated.moveBall(t,target.x,target.y);}
+  catchBall(){this.ball.visible=false;this.illustrated.catchBall();}
   reveal(p,correct){this.inReplay=false;this.zone.visible=true;this.marker.visible=true;const q=sampleABS(p);this.marker.position.set(q.x,q.y,ZONE.mid-.009);this.markerRing.material.color.setHex(correct?0xd5ee8d:0xec827a);this.markerRing.material.emissive.copy(this.markerRing.material.color);}
   startABS(p){this.inReplay=true;this.abs.start(p);}
   updateABS(time){return this.abs.update(time,this.camera.aspect);}
   setABSView(view){this.abs.view=view;}
   replayTrail(p,t){this.clearTrail();const pts=[];for(let i=0;i<=80;i++){const q=trajectory(p,t*i/80);pts.push([q.x,q.y,q.z]);}this.line(pts,0xe8d9a0,this.trail,.5);}
-  render(time=0){if(this.inReplay)this.renderer.render(this.abs.scene,this.abs.camera);else{this.illustrated.idle(time);this.batter.idle(time);this.renderer.render(this.scene,this.camera);}}
+  render(time=0,dt=0){if(this.inReplay)this.renderer.render(this.abs.scene,this.abs.camera);else{this.illustrated.update(time,dt);this.batter.idle(time);this.renderer.render(this.scene,this.camera);}}
 }
