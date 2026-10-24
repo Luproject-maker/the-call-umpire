@@ -1,0 +1,4 @@
+artifacts/
+.openai/
+node_modules/
+*.log
