@@ -1,5 +1,18 @@
 # Original character assets
 
+## Video-referenced left-handed ready stance (v5)
+
+Saved as `dist/assets/batter-ready-v5.png`, generated using the built-in imagegen tool with transparent alpha. Pose/camera reference: MLB official Ump Cam, https://www.mlb.com/brewers/video/brewers-preview-ump-cam-of-misiorowski-s-strikeouts , paused at about 1 second. The screenshot is only a local research artifact; it is not shipped with the game. The old rear-facing image is replaced in gameplay because it showed the wrong side of a hitter standing at screen-right. The generated original character uses natural navy/white uniform colors, without the referenced player's likeness, logos or uniform.
+
+Final generation prompt:
+
+Use case: illustration-story
+Asset type: ONE transparent full-body baseball batter cutout for a home plate umpire simulation.
+Input image is a POSE AND CAMERA GEOMETRY reference only: the LEFT-HANDED BATTER at the right of the MLB video player, paused BEFORE swinging. Ignore the entire web interface and all text. Do not copy the real player's likeness, logos or gray uniform.
+Draw a new anonymous athletic adult LEFT-HANDED batter standing on the RIGHT SIDE of the umpire view. Camera is behind home plate, facing the pitcher. Crucially, in this stance the umpire sees the FRONT/CHEST and near SIDE of the batter's torso, NOT the broad back of his jersey. Match the reference ready stance: head turned to SCREEN LEFT toward the pitcher, visible left-facing side profile, helmet brim pointing LEFT; chest front and shirt buttons/seam visible, sternum angled slightly toward viewer/screen-left. Feet shoulder-width, gently flexed knees, body side-on to the pitcher, shoulders aligned with the pitch direction. The right/front foot is toward the pitcher and appears slightly SCREEN LEFT, left/back foot toward viewer and slightly SCREEN RIGHT. Both gloved hands stacked together beside his LEFT/rear shoulder near the screen-left side of his face as in reference; RIGHT hand lower on the handle, LEFT hand above. Elbows naturally bent, bat extends from hands past his rear shoulder to the UPPER RIGHT of image. Keep the hands in front of his chest as seen in reference, not behind the head.
+Natural colors: navy helmet, navy short sleeve button-front baseball jersey, white pants with dark belt, white batting gloves, black cleats, warm natural skin, brown wood bat. Realistic anatomy and detailed editorial sports illustration with cloth folds and dimensional shading, no cartoon exaggeration.
+Full body including entire bat and both cleats, with 4% transparent padding, portrait 2:3 composition. Anatomically credible ready stance, not a swing or follow-through. No other people, no scenery, no ground, no drop shadow, no letters, no numbers, no logos. Genuine transparent alpha background.
+
 ## Updated rear-facing batter (v3)
 
 Saved as `dist/assets/batter-ready-v3.png`, generated with the built-in imagegen tool. The original batter was supplied as the identity and illustration reference. The image is rigged at runtime for weight shifts, bat preparation and breathing; the original PNG alpha is preserved.

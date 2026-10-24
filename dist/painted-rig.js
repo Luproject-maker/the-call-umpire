@@ -1,5 +1,5 @@
 import * as THREE from './vendor/three.module.min.js';
-import {BONES,blendPose,clamp} from './motion.js?v=4';
+import {BONES,blendPose,clamp} from './motion.js?v=5';
 
 // Each drawing gets a fine triangulated surface. Three nearby anatomical
 // bones drive each vertex. Adjacent drawings are warped into the SAME pose

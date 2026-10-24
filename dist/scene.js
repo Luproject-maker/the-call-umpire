@@ -2,14 +2,15 @@ import * as THREE from './vendor/three.module.min.js';
 import {ZONE,PLATE,BALL_RADIUS,trajectory,sampleABS} from './engine.js';
 import {Athlete,POSES} from './players.js';
 import {ABSReplay} from './abs-replay.js';
-import {IllustratedPlayers} from './illustrated-players.js?v=4';
+import {IllustratedPlayers} from './illustrated-players.js?v=5';
+import {applyUmpireView} from './umpire-view.js?v=5';
 const C={grass:0x355b3d,dirt:0x93684d,jersey:0xe1dfd0,navy:0x163b3c,skin:0xb6805c};
 export class Ballpark{
   constructor(canvas){
     this.canvas=canvas;this.renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false,powerPreference:'high-performance'});
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));this.renderer.outputColorSpace=THREE.SRGBColorSpace;this.renderer.toneMapping=THREE.ACESFilmicToneMapping;this.renderer.toneMappingExposure=1.25;this.renderer.shadowMap.enabled=true;this.renderer.shadowMap.type=THREE.PCFSoftShadowMap;
     this.scene=new THREE.Scene();this.scene.background=new THREE.Color(0x122d35);this.scene.fog=new THREE.FogExp2(0x193738,.009);
-    this.camera=new THREE.PerspectiveCamera(64,1,.05,250);this.camera.position.set(.65,1.68,-3.0);this.camera.lookAt(0,1.10,18);
+    this.camera=new THREE.PerspectiveCamera(60,1,.05,250);applyUmpireView(this.camera,1);
     this.scene.add(new THREE.HemisphereLight(0xb5d9db,0x4a4028,2.3));const key=new THREE.DirectionalLight(0xfff1ce,2.2);key.position.set(-15,28,-8);key.castShadow=true;key.shadow.mapSize.set(2048,2048);key.shadow.camera.left=-4;key.shadow.camera.right=4;key.shadow.camera.top=4;key.shadow.camera.bottom=-4;key.shadow.camera.far=80;key.shadow.bias=-.0003;this.scene.add(key);const fill=new THREE.DirectionalLight(0xc5ece8,1.1);fill.position.set(22,20,25);this.scene.add(fill);
     this.groundTexture=this.makeGroundTexture();this.buildField();this.buildStadium();this.buildPeople();this.buildZone();this.buildBall();this.abs=new ABSReplay();this.inReplay=false;this.resize();this.observer=new ResizeObserver(()=>this.resize());this.observer.observe(canvas.parentElement);this.replayTime=0;
   }
@@ -66,19 +67,21 @@ export class Ballpark{
     this.illustrated=new IllustratedPlayers(this.scene,this.camera);this.assetsReady=this.illustrated.ready.then(()=>{this.pitcher.root.visible=false;this.batter.root.visible=false;this.catcher.root.visible=false;});
   }
   buildZone(){
-    this.zone=new THREE.Group();this.scene.add(this.zone);this.zone.visible=false;
+    this.zone=new THREE.Group();this.scene.add(this.zone);this.zone.visible=false;this.zone.renderOrder=50;
     const {halfWidth:w,bottom:b,top:t,mid:z}=ZONE;
     this.line([[-w,b,z],[w,b,z],[w,t,z],[-w,t,z],[-w,b,z]],0xd5ee8d,this.zone,.85);
     for(let i=1;i<3;i++){const x=-w+2*w*i/3,y=b+(t-b)*i/3;this.line([[x,b,z],[x,t,z]],0xd5ee8d,this.zone,.2);this.line([[-w,y,z],[w,y,z]],0xd5ee8d,this.zone,.2);}
     const plane=this.mesh(new THREE.PlaneGeometry(w*2,t-b),0xd5ee8d,this.zone,[0,(b+t)/2,z],{transparent:true,opacity:.055,side:THREE.DoubleSide,depthWrite:false});plane.rotation.y=Math.PI;
-    this.marker=new THREE.Group();this.scene.add(this.marker);this.marker.visible=false;this.markerRing=this.mesh(new THREE.RingGeometry(.04,.049,36),0xd5ee8d,this.marker,[0,0,0],{side:THREE.DoubleSide,emissive:0xd5ee8d,emissiveIntensity:.5,depthTest:false});
+    // Post-call training graphics remain legible in the centred umpire view.
+    this.zone.traverse(o=>{if(o.material)o.material.depthTest=false;});
+    this.marker=new THREE.Group();this.scene.add(this.marker);this.marker.visible=false;this.marker.renderOrder=60;this.markerRing=this.mesh(new THREE.RingGeometry(.04,.049,36),0xd5ee8d,this.marker,[0,0,0],{side:THREE.DoubleSide,transparent:true,emissive:0xd5ee8d,emissiveIntensity:.5,depthTest:false});
     this.trail=new THREE.Group();this.scene.add(this.trail);
   }
   buildBall(){
     this.ball=new THREE.Group();this.scene.add(this.ball);this.ball.visible=false;this.mesh(new THREE.SphereGeometry(BALL_RADIUS,20,16),0xf2ead8,this.ball,[0,0,0],{roughness:.6,emissive:0x96846a,emissiveIntensity:.15});
     for(const side of [-1,1]){const pts=[];for(let i=0;i<=40;i++){const angle=i/40*Math.PI*2;pts.push([Math.cos(angle)*.028,Math.sin(angle)*.028,side*.023]);}this.line(pts,0xac5149,this.ball);}
   }
-  resize(){const r=this.canvas.parentElement.getBoundingClientRect();this.renderer.setSize(r.width,r.height,false);this.camera.aspect=r.width/r.height;this.camera.fov=2*Math.atan(Math.max(Math.tan(32*Math.PI/180),Math.tan(38*Math.PI/180)/this.camera.aspect))*180/Math.PI;this.camera.updateProjectionMatrix();}
+  resize(){const r=this.canvas.parentElement.getBoundingClientRect();this.renderer.setSize(r.width,r.height,false);applyUmpireView(this.camera,r.width/r.height);}
   setZone(visible){this.zone.visible=visible;}
   clearTrail(){for(const o of [...this.trail.children]){this.trail.remove(o);o.geometry.dispose();o.material.dispose();}this.marker.visible=false;}
   prepare(){this.inReplay=false;this.clearTrail();this.ball.visible=false;this.pitcher.setPose(POSES.set);this.catcher.setPose(POSES.catcher);this.illustrated.prepare();}

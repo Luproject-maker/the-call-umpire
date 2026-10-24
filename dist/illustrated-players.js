@@ -1,17 +1,20 @@
 import * as THREE from './vendor/three.module.min.js';
-import {RigFrame,PaintedActor} from './painted-rig.js?v=4';
-import {PITCH_POSES,BATTER_POSE,CATCHER_POSE,localPose,clonePose,shift,motionSample,WINDUP_STOPS,FOLLOW_STOPS,catcherTarget,smooth,blendPose} from './motion.js?v=4';
+import {RigFrame,PaintedActor} from './painted-rig.js?v=5';
+import {CATCHER_POSITION} from './umpire-view.js?v=5';
+import {PITCH_POSES,BATTER_POSE,CATCHER_POSE,localPose,clonePose,shift,motionSample,WINDUP_STOPS,FOLLOW_STOPS,catcherTarget,smooth,blendPose} from './motion.js?v=5';
 
 export class IllustratedPlayers{
   constructor(scene,camera){
     this.group=new THREE.Group();scene.add(this.group);this.group.visible=false;this.camera=camera;this.loaded=false;this.phase='ready';this.windupTime=0;this.flightTime=0;this.receiveTime=0;
     const loader=new THREE.TextureLoader();
-    this.ready=Promise.all(['batter-ready-v3.png','catcher.png','pitcher-poses.png'].map(name=>loader.loadAsync(new URL('./assets/'+name,import.meta.url).href))).then(([batter,catcher,pitcher])=>{
+    this.ready=Promise.all(['batter-ready-v5.png','catcher.png','pitcher-poses.png'].map(name=>loader.loadAsync(new URL('./assets/'+name,import.meta.url).href))).then(([batter,catcher,pitcher])=>{
       for(const t of [batter,catcher,pitcher]){t.colorSpace=THREE.SRGBColorSpace;t.minFilter=t.magFilter=THREE.LinearFilter;t.generateMipmaps=false;}
-      this.batterBase=localPose(BATTER_POSE,1.60,2.40,.025);
+      this.batterBase=localPose(BATTER_POSE,1.42,2.13,.055);
       this.catcherBase=localPose(CATCHER_POSE,1.42,1.42,.055);
-      this.batter=new PaintedActor(this.group,[new RigFrame(batter,this.batterBase,1.60,2.40,.025,null,[['wristR','batTip',.045]])],[-.93,.025,.35]);
-      this.catcher=new PaintedActor(this.group,[new RigFrame(catcher,this.catcherBase,1.42,1.42,.055,null,[['wristL','mitt',.08]])],[-.12,.015,-.5]);
+      // A left-handed hitter belongs on screen-right. The umpire sees his
+      // chest/side in the ready stance, not the back of a right-handed hitter.
+      this.batter=new PaintedActor(this.group,[new RigFrame(batter,this.batterBase,1.42,2.13,.055,null,[['wristR','batTip',.045]])],[-.93,.025,.35]);
+      this.catcher=new PaintedActor(this.group,[new RigFrame(catcher,this.catcherBase,1.42,1.42,.055,null,[['wristL','mitt',.08]])],CATCHER_POSITION);
       const anchors=[.018,.022,.008,.036,.036,.024];
       const frames=PITCH_POSES.map((pose,i)=>new RigFrame(pitcher,localPose(pose,2.05,2.05,anchors[i],true),2.05,2.05,anchors[i],{x:(i%3)/3+2/1536,y:(1-Math.floor(i/3))/2+14/1024,w:508/1536,h:496/1024}));
       this.pitcher=new PaintedActor(this.group,frames,[0,.20,18.44]);

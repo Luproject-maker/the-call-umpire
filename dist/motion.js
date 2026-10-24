@@ -20,7 +20,9 @@ export const PITCH_POSES=[
  {head:[.77,.18],neck:[.74,.27],shoulderL:[.73,.31],shoulderR:[.63,.35],elbowL:[.81,.35],elbowR:[.77,.48],wristL:[.81,.30],wristR:[.87,.56],hipL:[.57,.51],hipR:[.48,.48],kneeL:[.56,.73],kneeR:[.37,.51],ankleL:[.56,.92],ankleR:[.24,.43]},
  {head:[.51,.15],neck:[.52,.24],shoulderL:[.42,.29],shoulderR:[.64,.29],elbowL:[.45,.44],elbowR:[.68,.44],wristL:[.49,.61],wristR:[.67,.57],hipL:[.47,.52],hipR:[.60,.52],kneeL:[.43,.74],kneeR:[.61,.75],ankleL:[.37,.91],ankleR:[.63,.93]}
 ];
-export const BATTER_POSE={head:[.51,.19],neck:[.55,.25],shoulderL:[.43,.29],shoulderR:[.74,.29],elbowL:[.43,.34],elbowR:[.80,.31],wristL:[.65,.215],wristR:[.69,.215],hipL:[.54,.46],hipR:[.70,.46],kneeL:[.38,.67],kneeR:[.76,.69],ankleL:[.31,.92],ankleR:[.86,.89],batTip:[.86,.045]};
+// v5 left-handed ready stance, based on actual Ump Cam geometry. The left
+// arm/leg appear at image-right, with the front of the jersey visible.
+export const BATTER_POSE={head:[.37,.115],neck:[.43,.19],shoulderL:[.62,.19],shoulderR:[.30,.20],elbowL:[.67,.258],elbowR:[.29,.265],wristL:[.49,.155],wristR:[.425,.175],hipL:[.61,.43],hipR:[.46,.44],kneeL:[.60,.65],kneeR:[.38,.63],ankleL:[.72,.88],ankleR:[.43,.81],batTip:[.92,.055]};
 export const CATCHER_POSE={head:[.51,.14],neck:[.51,.24],shoulderL:[.35,.29],shoulderR:[.74,.31],elbowL:[.22,.45],elbowR:[.83,.50],wristL:[.19,.415],wristR:[.73,.62],hipL:[.43,.64],hipR:[.66,.64],kneeL:[.28,.57],kneeR:[.84,.62],ankleL:[.27,.91],ankleR:[.86,.92],mitt:[.155,.34]};
 export function localPose(raw,width,height,anchor=.05,cropped=false){
   const result={};for(const [k,p] of Object.entries(raw)){const x=cropped?(p[0]*512-2)/508:p[0],y=cropped?(p[1]*512-2)/496:p[1];result[k]=[(x-.5)*width,(1-y-anchor)*height];}

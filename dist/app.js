@@ -81,6 +81,6 @@ function frame(now){const dt=Math.max(0,(now-lastTime)/1000);lastTime=now;if(par
   park.render(now/1000,dt);
 }requestAnimationFrame(frame);}
 reset();ui.start.disabled=true;status('人物素材載入中');
-try{const {Ballpark}=await import('./scene.js?v=4');park=new Ballpark($('field'));await park.assetsReady;ui.start.disabled=false;status('準備進場');park.setZone(mode==='practice'&&ui.zone.checked);requestAnimationFrame(frame);}
+try{const {Ballpark}=await import('./scene.js?v=5');park=new Ballpark($('field'));await park.assetsReady;ui.start.disabled=false;status('準備進場');park.setZone(mode==='practice'&&ui.zone.checked);requestAnimationFrame(frame);}
 catch(error){console.error('Ballpark initialization failed',error);state='error';ui.intro.hidden=true;$('load-error').hidden=false;controls();status('球場載入失敗');}
 $('field').addEventListener('webglcontextlost',e=>{e.preventDefault();if(!paused)togglePause();status('繪圖連線中斷，請重新載入');});
