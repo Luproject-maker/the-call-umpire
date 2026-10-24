@@ -23,7 +23,7 @@ function updateMetrics(){const s=session;$('accuracy').textContent=s?.pitches.le
 function clearReview(){lastResult=null;$('chart-points').replaceChildren();$('chart-empty').style.display='';$('history').replaceChildren();$('verdict').className='verdict';$('verdict-title').textContent='你的判決，即將開始。';$('verdict-detail').textContent='接球後，按下好球或壞球。';}
 function setupMode(){document.querySelectorAll('[data-mode]').forEach(b=>{b.classList.toggle('active',b.dataset.mode===mode);b.setAttribute('aria-pressed',String(b.dataset.mode===mode));});$('mode-label').textContent=mode==='challenge'?'20 球挑戰':'自由練習';$('pitch-total').textContent=mode==='challenge'?'20':'∞';$('mode-description').textContent=mode==='challenge'?'20 球決勝負，考驗你的判決準確度。':'不限球數，觀察球路並建立你的好球帶。';$('zone-note').textContent=mode==='challenge'?'正式挑戰於判決後揭示':'練習時可隨時切換輔助框線';ui.zone.disabled=mode!=='practice';$('zone-label').textContent=mode==='practice'&&ui.zone.checked?'好球帶輔助已開啟':'好球帶於判決後顯示';}
 function reset(){session=null;pitch=null;state='idle';paused=false;phaseTime=0;ui.intro.hidden=false;ui.result.hidden=true;$('abs-overlay').hidden=true;$('pause-overlay').hidden=true;$('pitch-info').hidden=true;$('pitch-number').textContent='00';park?.prepare();park?.setZone(mode==='practice'&&ui.zone.checked);clearReview();lockSetup(false);updateMetrics();setupMode();controls();status('準備進場');updateBest();}
-function start(){if(!park||state!=='idle')return;session=new GameSession(mode,difficulty());ui.intro.hidden=true;lockSetup(true);beep('start');nextPitch();}
+function start(){if(!park||!park.illustrated.loaded||state!=='idle')return;session=new GameSession(mode,difficulty());ui.intro.hidden=true;lockSetup(true);beep('start');nextPitch();}
 function nextPitch(){if(!session||paused)return;if(session.complete){finish();return;}pitch=createPitch(session.difficulty);state='windup';phaseTime=0;park.prepare();park.setZone(mode==='practice'&&ui.zone.checked);$('pitch-number').textContent=String(session.pitches.length+1).padStart(2,'0');$('pitch-info').hidden=true;status('投手準備中');controls();}
 function judge(call){if(state!=='awaiting'||paused)return;lastResult=session.judge(pitch,call);state='review';park.reveal(pitch,lastResult.correct);$('pitch-info').hidden=false;$('pitch-type').textContent=pitch.name;$('pitch-speed').textContent=pitch.speed;
   const actual=pitch.strike?'好球':'壞球',yourCall=call?'好球':'壞球';
@@ -74,7 +74,7 @@ function frame(now){const dt=Math.min((now-lastTime)/1000,.06);lastTime=now;if(p
   else if(state==='replay'){replayTime=Math.min(replayTime+dt,6);updateABS();}
   park.render(now/1000);
 }requestAnimationFrame(frame);}
-reset();
-try{const {Ballpark}=await import('./scene.js');park=new Ballpark($('field'));park.setZone(mode==='practice'&&ui.zone.checked);requestAnimationFrame(frame);}
+reset();ui.start.disabled=true;status('人物素材載入中');
+try{const {Ballpark}=await import('./scene.js');park=new Ballpark($('field'));await park.assetsReady;ui.start.disabled=false;status('準備進場');park.setZone(mode==='practice'&&ui.zone.checked);requestAnimationFrame(frame);}
 catch(error){console.error('Ballpark initialization failed',error);state='error';ui.intro.hidden=true;$('load-error').hidden=false;controls();status('球場載入失敗');}
 $('field').addEventListener('webglcontextlost',e=>{e.preventDefault();if(!paused)togglePause();status('繪圖連線中斷，請重新載入');});

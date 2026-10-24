@@ -2,13 +2,14 @@ import * as THREE from './vendor/three.module.min.js';
 import {ZONE,PLATE,BALL_RADIUS,trajectory,sampleABS} from './engine.js';
 import {Athlete,POSES} from './players.js';
 import {ABSReplay} from './abs-replay.js';
+import {IllustratedPlayers} from './illustrated-players.js';
 const C={grass:0x355b3d,dirt:0x93684d,jersey:0xe1dfd0,navy:0x163b3c,skin:0xb6805c};
 export class Ballpark{
   constructor(canvas){
     this.canvas=canvas;this.renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false,powerPreference:'high-performance'});
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));this.renderer.outputColorSpace=THREE.SRGBColorSpace;this.renderer.toneMapping=THREE.ACESFilmicToneMapping;this.renderer.toneMappingExposure=1.25;this.renderer.shadowMap.enabled=true;this.renderer.shadowMap.type=THREE.PCFSoftShadowMap;
     this.scene=new THREE.Scene();this.scene.background=new THREE.Color(0x122d35);this.scene.fog=new THREE.FogExp2(0x193738,.009);
-    this.camera=new THREE.PerspectiveCamera(64,1,.05,250);this.camera.position.set(.42,1.72,-2.05);this.camera.lookAt(0,1.22,18);
+    this.camera=new THREE.PerspectiveCamera(64,1,.05,250);this.camera.position.set(.65,1.68,-3.0);this.camera.lookAt(0,1.10,18);
     this.scene.add(new THREE.HemisphereLight(0xb5d9db,0x4a4028,2.3));const key=new THREE.DirectionalLight(0xfff1ce,2.2);key.position.set(-15,28,-8);key.castShadow=true;key.shadow.mapSize.set(2048,2048);key.shadow.camera.left=-4;key.shadow.camera.right=4;key.shadow.camera.top=4;key.shadow.camera.bottom=-4;key.shadow.camera.far=80;key.shadow.bias=-.0003;this.scene.add(key);const fill=new THREE.DirectionalLight(0xc5ece8,1.1);fill.position.set(22,20,25);this.scene.add(fill);
     this.groundTexture=this.makeGroundTexture();this.buildField();this.buildStadium();this.buildPeople();this.buildZone();this.buildBall();this.abs=new ABSReplay();this.inReplay=false;this.resize();this.observer=new ResizeObserver(()=>this.resize());this.observer.observe(canvas.parentElement);this.replayTime=0;
   }
@@ -62,6 +63,7 @@ export class Ballpark{
     this.batter=new Athlete(this.scene,{role:'batter',position:[-.93,.025,.35],rotation:-Math.PI/2,jersey:0xdad8d1,accent:0x183950,number:'27',skin:0xc39372});
     this.catcher=new Athlete(this.scene,{role:'catcher',position:[0,.015,-.83],rotation:Math.PI,jersey:0xd9ddd9,accent:0x193949,number:'2',skin:0xa97857});
     this.glove=this.catcher.glove;
+    this.illustrated=new IllustratedPlayers(this.scene);this.assetsReady=this.illustrated.ready.then(()=>{this.pitcher.root.visible=false;this.batter.root.visible=false;this.catcher.root.visible=false;});
   }
   buildZone(){
     this.zone=new THREE.Group();this.scene.add(this.zone);this.zone.visible=false;
@@ -79,14 +81,14 @@ export class Ballpark{
   resize(){const r=this.canvas.parentElement.getBoundingClientRect();this.renderer.setSize(r.width,r.height,false);this.camera.aspect=r.width/r.height;this.camera.updateProjectionMatrix();}
   setZone(visible){this.zone.visible=visible;}
   clearTrail(){for(const o of [...this.trail.children]){this.trail.remove(o);o.geometry.dispose();o.material.dispose();}this.marker.visible=false;}
-  prepare(){this.inReplay=false;this.clearTrail();this.ball.visible=false;this.pitcher.setPose(POSES.set);this.catcher.setPose(POSES.catcher);}
-  windup(t){this.pitcher.windup(t);}
-  moveBall(p,t){const q=trajectory(p,t);this.ball.visible=true;this.ball.position.set(q.x,q.y,q.z);this.ball.rotation.set(t*20,t*30,0);const target=trajectory(p,1.034);this.catcher.receive(target.x,target.y,t);this.pitcher.followThrough(t);}
+  prepare(){this.inReplay=false;this.clearTrail();this.ball.visible=false;this.pitcher.setPose(POSES.set);this.catcher.setPose(POSES.catcher);this.illustrated.prepare();}
+  windup(t){this.pitcher.windup(t);this.illustrated.windup(t);}
+  moveBall(p,t){const q=trajectory(p,t);this.ball.visible=true;this.ball.position.set(q.x,q.y,q.z);this.ball.rotation.set(t*20,t*30,0);const target=trajectory(p,1.034);this.catcher.receive(target.x,target.y,t);this.pitcher.followThrough(t);this.illustrated.moveBall(t,target.x);}
   catchBall(){this.ball.visible=false;}
   reveal(p,correct){this.inReplay=false;this.zone.visible=true;this.marker.visible=true;const q=sampleABS(p);this.marker.position.set(q.x,q.y,ZONE.mid-.009);this.markerRing.material.color.setHex(correct?0xd5ee8d:0xec827a);this.markerRing.material.emissive.copy(this.markerRing.material.color);}
   startABS(p){this.inReplay=true;this.abs.start(p);}
   updateABS(time){return this.abs.update(time,this.camera.aspect);}
   setABSView(view){this.abs.view=view;}
   replayTrail(p,t){this.clearTrail();const pts=[];for(let i=0;i<=80;i++){const q=trajectory(p,t*i/80);pts.push([q.x,q.y,q.z]);}this.line(pts,0xe8d9a0,this.trail,.5);}
-  render(time=0){if(this.inReplay)this.renderer.render(this.abs.scene,this.abs.camera);else{this.batter.idle(time);this.renderer.render(this.scene,this.camera);}}
+  render(time=0){if(this.inReplay)this.renderer.render(this.abs.scene,this.abs.camera);else{this.illustrated.idle(time);this.batter.idle(time);this.renderer.render(this.scene,this.camera);}}
 }
